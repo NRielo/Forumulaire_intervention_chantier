@@ -756,10 +756,10 @@
     <div class="bottom-bar">
         <div class="btn-group">
             <button type="button" class="btn btn-primary" onclick="saveForm()">
-                💾 Enregistrer
+                📄 Générer PDF & Upload Drive
             </button>
-            <button type="button" class="btn btn-outline" onclick="shareForm()">
-                📤 Partager
+            <button type="button" class="btn btn-outline" onclick="authenticateGoogleDrive()">
+                🔗 Connecter Drive
             </button>
         </div>
     </div>
@@ -776,7 +776,7 @@
 
         // ⚠️ IMPORTANT : Changez ce mot de passe !
         // Pour plus de sécurité, utilisez un hash SHA-256
-        const CORRECT_PASSWORD = "ielo2025!"; // ← CHANGEZ CE MOT DE PASSE
+        const CORRECT_PASSWORD = "ielo2025"; // ← CHANGEZ CE MOT DE PASSE
 
         // Alternative : utiliser des hash SHA-256 pour plus de sécurité
         // Générez un hash sur : https://emn178.github.io/online-tools/sha256.html
@@ -1179,30 +1179,345 @@
             }
         }
 
-        // Sauvegarde
-        function saveForm() {
+        // ============================================
+        // CONFIGURATION GOOGLE DRIVE
+        // ============================================
+        
+        // ID du dossier Google Drive cible
+        const DRIVE_FOLDER_ID = '1to1C4MLfBvp_W5u7sKo7HEqky5o2lUFK';
+        
+        // Configuration Google API
+        const CLIENT_ID = 'VOTRE_CLIENT_ID.apps.googleusercontent.com'; // À configurer
+        const API_KEY = 'VOTRE_API_KEY'; // À configurer
+        const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+        let gapiInited = false;
+        let gisInited = false;
+        let tokenClient;
+        let accessToken = null;
+
+        // Charger jsPDF pour générer les PDF
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        document.head.appendChild(script);
+
+        // ============================================
+        // GÉNÉRATION DU PDF
+        // ============================================
+
+        async function saveForm() {
+            showToast('📄 Génération du PDF en cours...');
+            
+            // Attendre que jsPDF soit chargé
+            if (typeof window.jspdf === 'undefined') {
+                await new Promise(resolve => {
+                    const checkjsPDF = setInterval(() => {
+                        if (typeof window.jspdf !== 'undefined') {
+                            clearInterval(checkjsPDF);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Récupérer les données du formulaire
             const formData = new FormData(document.getElementById('rexForm'));
             const data = {};
-            
             for (let [key, value] of formData.entries()) {
                 data[key] = value;
             }
-            
-            data.photos = photos;
-            data.geolocation = locationData;
-            data.timestamp = new Date().toISOString();
-            
-            const json = JSON.stringify(data, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
+
+            let yPos = 20;
+            const lineHeight = 7;
+            const pageHeight = 280;
+
+            // En-tête
+            doc.setFontSize(20);
+            doc.setTextColor(45, 95, 79);
+            doc.text('🌾 REX Chantier - ielo', 105, yPos, { align: 'center' });
+            yPos += 15;
+
+            // Date et lieu
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Date: ${data.date || 'Non renseigné'}`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`Lieu: ${data.lieu || 'Non renseigné'}`, 20, yPos);
+            yPos += lineHeight;
+
+            // Coordonnées GPS si disponibles
+            if (locationData.lat && locationData.lon) {
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`GPS: ${locationData.lat.toFixed(6)}, ${locationData.lon.toFixed(6)}`, 20, yPos);
+                yPos += lineHeight;
+            }
+
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            yPos += 3;
+
+            // Entreprise et météo
+            if (data.entreprise) {
+                doc.text(`Entreprise: ${data.entreprise}`, 20, yPos);
+                yPos += lineHeight;
+            }
+            if (data.meteo) {
+                doc.text(`Météo: ${data.meteo}`, 20, yPos);
+                yPos += lineHeight;
+            }
+
+            yPos += 5;
+
+            // Section Quantités
+            doc.setFontSize(14);
+            doc.setTextColor(45, 95, 79);
+            doc.text('📊 Quantités et surfaces', 20, yPos);
+            yPos += lineHeight + 2;
+
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            if (data.quantite_paille) {
+                doc.text(`Quantité de paille: ${data.quantite_paille} tonnes`, 20, yPos);
+                yPos += lineHeight;
+            }
+            if (data.surfaces) {
+                doc.text(`Surfaces à isoler: ${data.surfaces} m²`, 20, yPos);
+                yPos += lineHeight;
+            }
+
+            yPos += 5;
+
+            // Section Caisson de test
+            if (data.dim_l || data.dim_w || data.dim_h || data.masse_insufflee) {
+                doc.setFontSize(14);
+                doc.setTextColor(45, 95, 79);
+                doc.text('📦 Caisson de test', 20, yPos);
+                yPos += lineHeight + 2;
+
+                doc.setFontSize(11);
+                doc.setTextColor(0, 0, 0);
+
+                if (data.dim_l && data.dim_w && data.dim_h) {
+                    const volume = parseFloat(data.dim_l) * parseFloat(data.dim_w) * parseFloat(data.dim_h);
+                    doc.text(`Dimensions: ${data.dim_l} × ${data.dim_w} × ${data.dim_h} m`, 20, yPos);
+                    yPos += lineHeight;
+                    doc.text(`Volume: ${volume.toFixed(2)} m³`, 20, yPos);
+                    yPos += lineHeight;
+                    doc.text(`Poids nécessaire: ${(volume * 115).toFixed(0)} kg`, 20, yPos);
+                    yPos += lineHeight;
+
+                    if (data.masse_insufflee) {
+                        const density = parseFloat(data.masse_insufflee) / volume;
+                        doc.text(`Masse insufflée: ${data.masse_insufflee} kg`, 20, yPos);
+                        yPos += lineHeight;
+
+                        // Code couleur pour masse volumique
+                        if (density >= 105) {
+                            doc.setTextColor(40, 167, 69);
+                            doc.text(`✓ Masse volumique: ${density.toFixed(2)} kg/m³ - CONFORME`, 20, yPos);
+                        } else {
+                            doc.setTextColor(220, 53, 69);
+                            doc.text(`✗ Masse volumique: ${density.toFixed(2)} kg/m³ - NON CONFORME`, 20, yPos);
+                        }
+                        doc.setTextColor(0, 0, 0);
+                        yPos += lineHeight;
+                    }
+                }
+
+                yPos += 5;
+            }
+
+            // Section Observations
+            if (data.remarques) {
+                if (yPos > pageHeight - 40) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.setFontSize(14);
+                doc.setTextColor(45, 95, 79);
+                doc.text('💬 Observations', 20, yPos);
+                yPos += lineHeight + 2;
+
+                doc.setFontSize(11);
+                doc.setTextColor(0, 0, 0);
+                const remarques = doc.splitTextToSize(data.remarques, 170);
+                doc.text(remarques, 20, yPos);
+                yPos += remarques.length * lineHeight;
+            }
+
+            // Photos
+            if (photos.length > 0) {
+                doc.addPage();
+                yPos = 20;
+
+                doc.setFontSize(14);
+                doc.setTextColor(45, 95, 79);
+                doc.text('📸 Photos du chantier', 105, yPos, { align: 'center' });
+                yPos += 15;
+
+                const photosPerPage = 3;
+                const photoWidth = 170;
+                const photoHeight = 80;
+
+                for (let i = 0; i < photos.length; i++) {
+                    if (i > 0 && i % photosPerPage === 0) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    try {
+                        doc.addImage(photos[i], 'JPEG', 20, yPos, photoWidth, photoHeight);
+                        doc.setFontSize(10);
+                        doc.setTextColor(100, 100, 100);
+                        doc.text(`Photo ${i + 1}/${photos.length}`, 105, yPos + photoHeight + 5, { align: 'center' });
+                        yPos += photoHeight + 15;
+                    } catch (error) {
+                        console.error('Erreur ajout photo:', error);
+                    }
+                }
+            }
+
+            // Footer sur toutes les pages
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(9);
+                doc.setTextColor(150, 150, 150);
+                doc.text(`REX Chantier ielo - Page ${i}/${pageCount}`, 105, 290, { align: 'center' });
+                doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, 105, 295, { align: 'center' });
+            }
+
+            // Nom du fichier
+            const fileName = `REX_${data.date || 'chantier'}_${Date.now()}.pdf`;
+
+            // Générer le blob PDF
+            const pdfBlob = doc.output('blob');
+
+            // Téléchargement local en backup
+            const url = URL.createObjectURL(pdfBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `rex_${data.date || 'chantier'}_${Date.now()}.json`;
+            a.download = fileName;
             a.click();
-            
             URL.revokeObjectURL(url);
-            showToast('✅ Données sauvegardées !');
+
+            showToast('✅ PDF généré ! Upload vers Drive...');
+
+            // Upload vers Google Drive
+            if (accessToken) {
+                uploadToGoogleDrive(pdfBlob, fileName);
+            } else {
+                showToast('⚠️ Connectez-vous à Google Drive pour l\'upload automatique');
+                // Proposer de se connecter
+                if (confirm('Voulez-vous vous connecter à Google Drive pour l\'upload automatique ?')) {
+                    authenticateGoogleDrive();
+                }
+            }
+        }
+
+        // ============================================
+        // AUTHENTIFICATION GOOGLE DRIVE
+        // ============================================
+
+        function authenticateGoogleDrive() {
+            showToast('🔐 Connexion à Google Drive...');
+            
+            // Charger Google Identity Services
+            if (!window.google) {
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.onload = initGoogleAuth;
+                document.head.appendChild(script);
+            } else {
+                initGoogleAuth();
+            }
+        }
+
+        function initGoogleAuth() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: (response) => {
+                    if (response.error) {
+                        showToast('❌ Erreur connexion Google Drive');
+                        return;
+                    }
+                    accessToken = response.access_token;
+                    showToast('✅ Connecté à Google Drive !');
+                    sessionStorage.setItem('gdriveToken', accessToken);
+                }
+            });
+            
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+        }
+
+        // Vérifier si déjà connecté au chargement
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedToken = sessionStorage.getItem('gdriveToken');
+            if (savedToken) {
+                accessToken = savedToken;
+            }
+        });
+
+        // ============================================
+        // UPLOAD VERS GOOGLE DRIVE
+        // ============================================
+
+        async function uploadToGoogleDrive(blob, fileName) {
+            if (!accessToken) {
+                showToast('⚠️ Non connecté à Google Drive');
+                return;
+            }
+
+            try {
+                // Créer les métadonnées du fichier
+                const metadata = {
+                    name: fileName,
+                    mimeType: 'application/pdf',
+                    parents: [DRIVE_FOLDER_ID]
+                };
+
+                // Créer le FormData avec métadonnées et fichier
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', blob);
+
+                // Upload multipart
+                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: form
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showToast('🎉 PDF uploadé sur Google Drive !');
+                    console.log('Fichier uploadé:', result);
+                    
+                    // Afficher le lien Drive
+                    const driveUrl = `https://drive.google.com/file/d/${result.id}/view`;
+                    setTimeout(() => {
+                        if (confirm('PDF uploadé avec succès ! Voulez-vous l\'ouvrir dans Drive ?')) {
+                            window.open(driveUrl, '_blank');
+                        }
+                    }, 1000);
+                } else {
+                    const error = await response.json();
+                    console.error('Erreur upload:', error);
+                    showToast('❌ Erreur upload Drive. PDF téléchargé en local.');
+                }
+            } catch (error) {
+                console.error('Erreur upload Drive:', error);
+                showToast('❌ Erreur upload Drive. PDF téléchargé en local.');
+            }
         }
 
         // Partage
