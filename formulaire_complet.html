@@ -1,0 +1,1818 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche Retour d'Expérience Chantiers - ielo</title>
+    <!-- Leaflet CSS pour la carte -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2d5f4f 0%, #3a7a63 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 255, 255, 0.05) 10px,
+                rgba(255, 255, 255, 0.05) 20px
+            );
+            animation: straw-pattern 20s linear infinite;
+        }
+
+        @keyframes straw-pattern {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .header h1 {
+            position: relative;
+            z-index: 1;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            position: relative;
+            z-index: 1;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .form-content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background-color: #2d5f4f;
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .section-content {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #3a7a63;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(58, 122, 99, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .photo-section {
+            background-color: #f9f9f9;
+            border: 2px dashed #d0d0d0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .photo-section:hover {
+            border-color: #3a7a63;
+            background-color: #f0f5f3;
+        }
+
+        .photo-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: #3a7a63;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2d5f4f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(58, 122, 99, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .photo-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .photo-item:hover {
+            transform: scale(1.05);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .photo-item .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: rgba(220, 53, 69, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .photo-item .remove-btn:hover {
+            background-color: #c82333;
+            transform: scale(1.1);
+        }
+
+        .submit-section {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .form-content {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .photo-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+
+        .photo-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        video {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        /* Styles pour l'autocomplétion d'adresse */
+        .location-input-container {
+            position: relative;
+        }
+
+        .geolocation-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #3a7a63;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .geolocation-btn:hover {
+            background-color: #2d5f4f;
+        }
+
+        .geolocation-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .autocomplete-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #3a7a63;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: none;
+        }
+
+        .autocomplete-results.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover {
+            background-color: #f0f5f3;
+        }
+
+        .autocomplete-item-main {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .autocomplete-item-secondary {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .map-container {
+            width: 100%;
+            height: 300px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid #e0e0e0;
+            display: none;
+        }
+
+        .map-container.show {
+            display: block;
+        }
+
+        .location-info {
+            background-color: #f0f5f3;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .location-info.show {
+            display: block;
+        }
+
+        .location-info strong {
+            color: #2d5f4f;
+        }
+
+        /* Modal pour les permissions */
+        .permission-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .permission-modal.show {
+            display: flex;
+        }
+
+        .permission-modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .permission-modal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .permission-modal-header h2 {
+            margin: 0;
+            color: #2d5f4f;
+            font-size: 1.5em;
+            margin-left: 10px;
+        }
+
+        .permission-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3a7a63;
+        }
+
+        .permission-item h3 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .permission-item p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .permission-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .permission-status.granted {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .permission-status.denied {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .permission-status.prompt {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .permission-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        .security-notice {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .security-notice h3 {
+            margin: 0 0 10px 0;
+            color: #2e7d32;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .security-notice ul {
+            margin: 10px 0 0 0;
+            padding-left: 20px;
+            color: #333;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .security-notice ul li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Modal de demande de permissions -->
+    <div id="permissionModal" class="permission-modal">
+        <div class="permission-modal-content">
+            <div class="permission-modal-header">
+                <span style="font-size: 2em;">🔒</span>
+                <h2>Autorisations nécessaires</h2>
+            </div>
+            
+            <p style="margin-bottom: 20px; color: #666;">
+                Cette application nécessite certaines autorisations pour fonctionner correctement. Vos données restent privées et ne sont jamais envoyées à des serveurs externes.
+            </p>
+
+            <div class="permission-item">
+                <h3>
+                    📍 Géolocalisation
+                    <span id="geoStatus" class="permission-status prompt">En attente</span>
+                </h3>
+                <p>Permet de localiser automatiquement le chantier. Vous pouvez également saisir l'adresse manuellement.</p>
+            </div>
+
+            <div class="permission-item">
+                <h3>
+                    📷 Caméra
+                    <span id="cameraStatus" class="permission-status prompt">En attente</span>
+                </h3>
+                <p>Permet de prendre des photos directement depuis l'application. Vous pouvez aussi importer des photos existantes.</p>
+            </div>
+
+            <div class="security-notice">
+                <h3>🔐 Sécurité et confidentialité</h3>
+                <ul>
+                    <li>Aucune donnée n'est envoyée à des serveurs externes</li>
+                    <li>Toutes les données restent sur votre appareil</li>
+                    <li>Les photos sont stockées localement uniquement</li>
+                    <li>Vous pouvez refuser les autorisations et utiliser les alternatives</li>
+                    <li>Les coordonnées GPS ne sont sauvegardées que dans votre export</li>
+                </ul>
+            </div>
+
+            <div class="permission-buttons">
+                <button type="button" class="btn btn-secondary" onclick="skipPermissions()">
+                    Continuer sans autoriser
+                </button>
+                <button type="button" class="btn btn-primary" onclick="requestPermissions()">
+                    Autoriser les accès
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🌾 ielo</h1>
+            <div class="subtitle">Fiche Retour d'Expérience Chantiers</div>
+        </div>
+
+        <div class="form-content">
+            <form id="rexForm">
+                <!-- Section: Informations chantier -->
+                <div class="section">
+                    <div class="section-header">Informations chantier</div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="date">Date</label>
+                                <input type="date" id="date" name="date" required>
+                            </div>
+                            <div class="form-group location-input-container">
+                                <label for="lieu">Lieu</label>
+                                <input type="text" 
+                                       id="lieu" 
+                                       name="lieu" 
+                                       placeholder="Rechercher une adresse..."
+                                       autocomplete="off"
+                                       oninput="searchAddress(this.value)"
+                                       required>
+                                <button type="button" 
+                                        class="geolocation-btn" 
+                                        onclick="getCurrentLocation()"
+                                        title="Utiliser ma position actuelle">
+                                    📍
+                                </button>
+                                <div id="autocompleteResults" class="autocomplete-results"></div>
+                                <div id="locationInfo" class="location-info"></div>
+                            </div>
+                        </div>
+                        
+                        <div id="mapContainer" class="map-container"></div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="meteo">Conditions météo</label>
+                                <input type="text" id="meteo" name="meteo">
+                            </div>
+                            <div class="form-group">
+                                <label for="entreprise">Entreprise accompagnée</label>
+                                <input type="text" id="entreprise" name="entreprise">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="quantite_paille">Quantité de paille pour le projet (tonnes)</label>
+                                <input type="number" step="0.01" id="quantite_paille" name="quantite_paille">
+                            </div>
+                            <div class="form-group">
+                                <label for="surfaces">Surfaces parois à isoler (m²)</label>
+                                <input type="number" step="0.01" id="surfaces" name="surfaces">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="redacteurs">ielo : rédacteurs / présents</label>
+                            <input type="text" id="redacteurs" name="redacteurs">
+                        </div>
+
+                        <div class="photo-section" id="photoSection1">
+                            <div class="icon">📸</div>
+                            <p>Photos du chantier</p>
+                            <p class="photo-label" style="font-size: 0.85em; color: #888; margin-top: 5px;">
+                                Sur mobile : utilisez "Importer" pour prendre une photo directement
+                            </p>
+                            <div class="photo-buttons">
+                                <button type="button" class="btn btn-primary" onclick="openCamera('photoSection1')">
+                                    <span>📷</span> Caméra web
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="uploadPhoto('photoSection1')">
+                                    <span>📁</span> Importer une photo
+                                </button>
+                            </div>
+                            <input type="file" id="fileInput1" accept="image/*" capture="environment" multiple onchange="handleFiles(this, 'photoSection1')">
+                            <div id="photoGrid1" class="photo-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Paille hachée ielo -->
+                <div class="section">
+                    <div class="section-header">Paille hachée ielo</div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="reference_sac">Référence sac</label>
+                                <input type="text" id="reference_sac" name="reference_sac">
+                            </div>
+                            <div class="form-group">
+                                <label for="poids_sac">Poids sac (kg)</label>
+                                <input type="number" step="0.01" id="poids_sac" name="poids_sac">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="masse_volumique_sac">Masse volumique dans le sac (kg/m³)</label>
+                                <input type="number" step="0.01" id="masse_volumique_sac" name="masse_volumique_sac">
+                            </div>
+                            <div class="form-group">
+                                <label for="teneur_eau">Teneur en eau massique (%)</label>
+                                <input type="number" step="0.01" id="teneur_eau" name="teneur_eau">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="aspect_visuel">Aspect visuel longueur de brins : homogénéité, nœuds, brins longs, présence de "laine"</label>
+                            <textarea id="aspect_visuel" name="aspect_visuel" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Matériel -->
+                <div class="section">
+                    <div class="section-header">Matériel</div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="marque_machine">Marque et modèle Machine</label>
+                                <input type="text" id="marque_machine" name="marque_machine">
+                            </div>
+                            <div class="form-group">
+                                <label for="ref_accessoires">Réf accessoires : buses, aiguille...</label>
+                                <input type="text" id="ref_accessoires" name="ref_accessoires">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="alimentation">Alimentation électrique</label>
+                                <input type="text" id="alimentation" name="alimentation">
+                            </div>
+                            <div class="form-group">
+                                <label for="pression_machine">Pression en sortie machine (PSI)</label>
+                                <input type="number" step="0.01" id="pression_machine" name="pression_machine">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pression_y">Pression en sortie Y (sans booster)</label>
+                                <input type="number" step="0.01" id="pression_y" name="pression_y">
+                            </div>
+                            <div class="form-group">
+                                <label for="pression_tuyau">Pression sortie tuyau 20 m avec booster</label>
+                                <input type="number" step="0.01" id="pression_tuyau" name="pression_tuyau">
+                            </div>
+                        </div>
+
+                        <div class="photo-section" id="photoSection2">
+                            <div class="icon">📸</div>
+                            <p>Photos du matériel</p>
+                            <p class="photo-label" style="font-size: 0.85em; color: #888; margin-top: 5px;">
+                                Sur mobile : utilisez "Importer" pour prendre une photo directement
+                            </p>
+                            <div class="photo-buttons">
+                                <button type="button" class="btn btn-primary" onclick="openCamera('photoSection2')">
+                                    <span>📷</span> Caméra web
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="uploadPhoto('photoSection2')">
+                                    <span>📁</span> Importer une photo
+                                </button>
+                            </div>
+                            <input type="file" id="fileInput2" accept="image/*" capture="environment" multiple onchange="handleFiles(this, 'photoSection2')">
+                            <div id="photoGrid2" class="photo-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Caisson de test -->
+                <div class="section">
+                    <div class="section-header">Caisson de test</div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="composition_caisson">Composition du caisson</label>
+                            <input type="text" id="composition_caisson" name="composition_caisson">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="dim_l">Dimensions caisson - Longueur (m)</label>
+                                <input type="number" step="0.01" id="dim_l" name="dim_l" oninput="calculateVolume()">
+                            </div>
+                            <div class="form-group">
+                                <label for="dim_w">Dimensions caisson - Largeur (m)</label>
+                                <input type="number" step="0.01" id="dim_w" name="dim_w" oninput="calculateVolume()">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="dim_h">Dimensions caisson - Hauteur (m)</label>
+                                <input type="number" step="0.01" id="dim_h" name="dim_h" oninput="calculateVolume()">
+                            </div>
+                            <div class="form-group">
+                                <label for="volume_caisson">Volume caisson (m³)</label>
+                                <input type="number" step="0.001" id="volume_caisson" name="volume_caisson" readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="poids_caisson_vide">Poids caisson vide (kg)</label>
+                                <input type="number" step="0.01" id="poids_caisson_vide" name="poids_caisson_vide">
+                            </div>
+                            <div class="form-group">
+                                <label for="poids_paille_necessaire">Poids de paille nécessaire pour 115 kg/m³ (kg)</label>
+                                <input type="number" step="0.01" id="poids_paille_necessaire" name="poids_paille_necessaire" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Infos sur l'essai -->
+                <div class="section">
+                    <div class="section-header">Infos sur l'essai</div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ouverture_trappe">Ouverture de trappe (%)</label>
+                                <input type="number" step="0.1" id="ouverture_trappe" name="ouverture_trappe">
+                            </div>
+                            <div class="form-group">
+                                <label for="ouverture_air">Ouverture d'air (%)</label>
+                                <input type="number" step="0.1" id="ouverture_air" name="ouverture_air">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="vitesse_sas">Vitesse de sas (%)</label>
+                                <input type="number" step="0.1" id="vitesse_sas" name="vitesse_sas">
+                            </div>
+                            <div class="form-group">
+                                <label for="temps_mise_oeuvre">Temps de mise en œuvre pour 1 caisson (min)</label>
+                                <input type="number" step="0.1" id="temps_mise_oeuvre" name="temps_mise_oeuvre">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="remarques">Remarques</label>
+                            <textarea id="remarques" name="remarques" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="masse_paille_insufflee">Masse de paille insufflée mise en œuvre (kg)</label>
+                                <input type="number" step="0.01" id="masse_paille_insufflee" name="masse_paille_insufflee" oninput="calculateDensity()">
+                            </div>
+                            <div class="form-group">
+                                <label for="masse_volumique_calculee">Masse volumique calculée (kg/m³)</label>
+                                <input type="number" step="0.01" id="masse_volumique_calculee" name="masse_volumique_calculee" readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="estimation_poussiere">Estimation visuelle poussière (/10 et qualitativement)</label>
+                                <input type="text" id="estimation_poussiere" name="estimation_poussiere">
+                            </div>
+                            <div class="form-group">
+                                <label for="duree_totale">Durée totale de mise en œuvre (jours)</label>
+                                <input type="number" step="0.5" id="duree_totale" name="duree_totale">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nombre_operateurs">Nombre d'opérateurs pour l'insufflation</label>
+                                <input type="number" id="nombre_operateurs" name="nombre_operateurs">
+                            </div>
+                            <div class="form-group">
+                                <label for="informations_autres">Informations autres</label>
+                                <input type="text" id="informations_autres" name="informations_autres">
+                            </div>
+                        </div>
+
+                        <div class="photo-section" id="photoSection3">
+                            <div class="icon">📸</div>
+                            <p>Photos de l'essai</p>
+                            <p class="photo-label" style="font-size: 0.85em; color: #888; margin-top: 5px;">
+                                Sur mobile : utilisez "Importer" pour prendre une photo directement
+                            </p>
+                            <div class="photo-buttons">
+                                <button type="button" class="btn btn-primary" onclick="openCamera('photoSection3')">
+                                    <span>📷</span> Caméra web
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="uploadPhoto('photoSection3')">
+                                    <span>📁</span> Importer une photo
+                                </button>
+                            </div>
+                            <input type="file" id="fileInput3" accept="image/*" capture="environment" multiple onchange="handleFiles(this, 'photoSection3')">
+                            <div id="photoGrid3" class="photo-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section finale -->
+                <div class="photo-section" id="photoSection4">
+                    <div class="icon">📸</div>
+                    <p>Photos additionnelles</p>
+                    <p class="photo-label" style="font-size: 0.85em; color: #888; margin-top: 5px;">
+                        Sur mobile : utilisez "Importer" pour prendre une photo directement
+                    </p>
+                    <div class="photo-buttons">
+                        <button type="button" class="btn btn-primary" onclick="openCamera('photoSection4')">
+                            <span>📷</span> Caméra web
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="uploadPhoto('photoSection4')">
+                            <span>📁</span> Importer une photo
+                        </button>
+                    </div>
+                    <input type="file" id="fileInput4" accept="image/*" capture="environment" multiple onchange="handleFiles(this, 'photoSection4')">
+                    <div id="photoGrid4" class="photo-grid"></div>
+                </div>
+
+                <!-- Boutons de soumission -->
+                <div class="submit-section">
+                    <button type="button" class="btn btn-primary" onclick="exportToPDF()">
+                        <span>📄</span> Exporter en PDF
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="exportToJSON()">
+                        <span>💾</span> Sauvegarder les données
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="resetForm()">
+                        <span>🔄</span> Réinitialiser
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Leaflet JS pour la carte -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Stockage des photos pour chaque section
+        const photoStorage = {
+            photoSection1: [],
+            photoSection2: [],
+            photoSection3: [],
+            photoSection4: []
+        };
+
+        let currentStream = null;
+        let currentSectionForCamera = null;
+        let map = null;
+        let marker = null;
+        let searchTimeout = null;
+        let currentLocationData = {
+            latitude: null,
+            longitude: null,
+            address: null
+        };
+
+        // État des permissions
+        let permissionsState = {
+            geolocation: 'prompt',
+            camera: 'prompt'
+        };
+
+        // ============================================
+        // GESTION DES PERMISSIONS ET SÉCURITÉ
+        // ============================================
+
+        // Afficher la modale au chargement de la page
+        window.addEventListener('load', function() {
+            // Vérifier si l'utilisateur a déjà fait son choix
+            const permissionsAsked = localStorage.getItem('ielo_permissions_asked');
+            
+            // Vérifier si on est en contexte sécurisé
+            const isSecureContext = window.isSecureContext;
+            const isLocalFile = window.location.protocol === 'file:';
+            
+            if (isLocalFile || !isSecureContext) {
+                // En mode local ou non-HTTPS, ne pas demander les permissions
+                console.log('Contexte non sécurisé détecté - Mode alternatives uniquement');
+                localStorage.setItem('ielo_permissions_asked', 'true');
+                permissionsState.geolocation = 'unavailable';
+                permissionsState.camera = 'unavailable';
+                return;
+            }
+            
+            if (!permissionsAsked) {
+                setTimeout(() => {
+                    document.getElementById('permissionModal').classList.add('show');
+                }, 500);
+            } else {
+                // Vérifier l'état des permissions déjà accordées
+                checkExistingPermissions();
+            }
+        });
+
+        // Vérifier les permissions existantes
+        async function checkExistingPermissions() {
+            // Vérifier si on est en HTTPS ou localhost (nécessaire pour les permissions)
+            const isSecureContext = window.isSecureContext;
+            
+            if (!isSecureContext && window.location.protocol === 'file:') {
+                console.log('Mode local détecté - Les permissions caméra/géolocalisation ne sont pas disponibles');
+                permissionsState.geolocation = 'unavailable';
+                permissionsState.camera = 'unavailable';
+                return;
+            }
+
+            // Vérifier la géolocalisation
+            if (navigator.permissions && navigator.geolocation) {
+                try {
+                    const geoPermission = await navigator.permissions.query({ name: 'geolocation' });
+                    permissionsState.geolocation = geoPermission.state;
+                    updatePermissionStatus('geoStatus', geoPermission.state);
+                    
+                    // Écouter les changements de permission
+                    geoPermission.addEventListener('change', () => {
+                        permissionsState.geolocation = geoPermission.state;
+                        updatePermissionStatus('geoStatus', geoPermission.state);
+                    });
+                } catch (error) {
+                    console.log('Vérification permission géolocalisation non supportée');
+                    permissionsState.geolocation = 'unavailable';
+                }
+            } else {
+                permissionsState.geolocation = 'unavailable';
+            }
+
+            // Vérifier la caméra
+            if (navigator.permissions && navigator.mediaDevices) {
+                try {
+                    const cameraPermission = await navigator.permissions.query({ name: 'camera' });
+                    permissionsState.camera = cameraPermission.state;
+                    updatePermissionStatus('cameraStatus', cameraPermission.state);
+                    
+                    // Écouter les changements de permission
+                    cameraPermission.addEventListener('change', () => {
+                        permissionsState.camera = cameraPermission.state;
+                        updatePermissionStatus('cameraStatus', cameraPermission.state);
+                    });
+                } catch (error) {
+                    console.log('Vérification permission caméra non supportée');
+                    permissionsState.camera = 'unavailable';
+                }
+            } else {
+                permissionsState.camera = 'unavailable';
+            }
+        }
+
+        // Demander les permissions
+        async function requestPermissions() {
+            let geoGranted = false;
+            let cameraGranted = false;
+
+            // Demander la géolocalisation
+            if (navigator.geolocation) {
+                try {
+                    await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                geoGranted = true;
+                                permissionsState.geolocation = 'granted';
+                                updatePermissionStatus('geoStatus', 'granted');
+                                resolve();
+                            },
+                            (error) => {
+                                permissionsState.geolocation = 'denied';
+                                updatePermissionStatus('geoStatus', 'denied');
+                                reject(error);
+                            }
+                        );
+                    });
+                } catch (error) {
+                    console.log('Géolocalisation refusée ou non disponible');
+                }
+            }
+
+            // Demander la caméra
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    cameraGranted = true;
+                    permissionsState.camera = 'granted';
+                    updatePermissionStatus('cameraStatus', 'granted');
+                    
+                    // Arrêter le stream immédiatement
+                    stream.getTracks().forEach(track => track.stop());
+                } catch (error) {
+                    permissionsState.camera = 'denied';
+                    updatePermissionStatus('cameraStatus', 'denied');
+                    console.log('Caméra refusée ou non disponible');
+                }
+            }
+
+            // Sauvegarder que l'utilisateur a été sollicité
+            localStorage.setItem('ielo_permissions_asked', 'true');
+
+            // Afficher un message de confirmation
+            setTimeout(() => {
+                let message = '';
+                if (geoGranted && cameraGranted) {
+                    message = '✅ Toutes les autorisations ont été accordées !';
+                } else if (geoGranted || cameraGranted) {
+                    message = '✅ Certaines autorisations ont été accordées. Vous pouvez utiliser les alternatives pour les autres fonctionnalités.';
+                } else {
+                    message = 'ℹ️ Aucune autorisation accordée. Vous pouvez toujours utiliser l\'application avec les alternatives (import de photos, saisie manuelle d\'adresse).';
+                }
+                
+                alert(message);
+                closePermissionModal();
+            }, 500);
+        }
+
+        // Passer les permissions
+        function skipPermissions() {
+            localStorage.setItem('ielo_permissions_asked', 'true');
+            updatePermissionStatus('geoStatus', 'denied');
+            updatePermissionStatus('cameraStatus', 'denied');
+            
+            alert('ℹ️ Vous pouvez continuer à utiliser l\'application. Les fonctionnalités de géolocalisation et caméra seront désactivées, mais vous pourrez saisir l\'adresse manuellement et importer des photos.');
+            
+            closePermissionModal();
+        }
+
+        // Fermer la modale de permissions
+        function closePermissionModal() {
+            document.getElementById('permissionModal').classList.remove('show');
+        }
+
+        // Mettre à jour l'affichage du statut de permission
+        function updatePermissionStatus(elementId, status) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            element.className = 'permission-status';
+            
+            switch(status) {
+                case 'granted':
+                    element.classList.add('granted');
+                    element.textContent = '✓ Autorisé';
+                    break;
+                case 'denied':
+                    element.classList.add('denied');
+                    element.textContent = '✗ Refusé';
+                    break;
+                default:
+                    element.classList.add('prompt');
+                    element.textContent = 'En attente';
+            }
+        }
+
+        // Sanitiser les entrées utilisateur pour éviter XSS
+        function sanitizeInput(input) {
+            const div = document.createElement('div');
+            div.textContent = input;
+            return div.innerHTML;
+        }
+
+        // Valider les coordonnées GPS
+        function validateCoordinates(lat, lon) {
+            return (
+                typeof lat === 'number' && 
+                typeof lon === 'number' &&
+                lat >= -90 && lat <= 90 &&
+                lon >= -180 && lon <= 180
+            );
+        }
+
+        // Vérifier la taille des fichiers images
+        function validateImageFile(file) {
+            const maxSize = 10 * 1024 * 1024; // 10 MB
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            
+            if (!allowedTypes.includes(file.type)) {
+                alert(`⚠️ Type de fichier non autorisé: ${file.type}\nTypes acceptés: JPEG, PNG, GIF, WebP`);
+                return false;
+            }
+            
+            if (file.size > maxSize) {
+                alert(`⚠️ Fichier trop volumineux: ${(file.size / 1024 / 1024).toFixed(2)} MB\nTaille maximale: 10 MB`);
+                return false;
+            }
+            
+            return true;
+        }
+
+        // ============================================
+        // FONCTIONS DE GÉOLOCALISATION ET RECHERCHE D'ADRESSE (SÉCURISÉES)
+        // ============================================
+
+        // Recherche d'adresse avec autocomplétion
+        async function searchAddress(query) {
+            clearTimeout(searchTimeout);
+            
+            const resultsContainer = document.getElementById('autocompleteResults');
+            
+            // Sanitiser l'entrée
+            query = sanitizeInput(query.trim());
+            
+            if (query.length < 3) {
+                resultsContainer.classList.remove('show');
+                return;
+            }
+
+            // Limiter la longueur de la requête
+            if (query.length > 200) {
+                query = query.substring(0, 200);
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    // Utilisation de l'API Nominatim d'OpenStreetMap (gratuite)
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
+                        {
+                            headers: {
+                                'Accept-Language': 'fr',
+                                'User-Agent': 'ielo-rex-chantiers/1.0' // Identification de l'application
+                            }
+                        }
+                    );
+                    
+                    if (!response.ok) {
+                        throw new Error('Erreur réseau');
+                    }
+                    
+                    const results = await response.json();
+                    
+                    if (results.length > 0) {
+                        displayAutocompleteResults(results);
+                    } else {
+                        resultsContainer.innerHTML = '<div class="autocomplete-item">Aucun résultat trouvé</div>';
+                        resultsContainer.classList.add('show');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la recherche d\'adresse:', error);
+                    resultsContainer.innerHTML = '<div class="autocomplete-item" style="color: #dc3545;">Erreur de connexion. Veuillez réessayer.</div>';
+                    resultsContainer.classList.add('show');
+                }
+            }, 300);
+        }
+
+        // Afficher les résultats de l'autocomplétion
+        function displayAutocompleteResults(results) {
+            const resultsContainer = document.getElementById('autocompleteResults');
+            resultsContainer.innerHTML = '';
+            
+            results.forEach(result => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                
+                const mainText = document.createElement('div');
+                mainText.className = 'autocomplete-item-main';
+                mainText.textContent = sanitizeInput(result.name || result.display_name.split(',')[0]);
+                
+                const secondaryText = document.createElement('div');
+                secondaryText.className = 'autocomplete-item-secondary';
+                secondaryText.textContent = sanitizeInput(result.display_name);
+                
+                item.appendChild(mainText);
+                item.appendChild(secondaryText);
+                
+                item.onclick = () => selectAddress(result);
+                
+                resultsContainer.appendChild(item);
+            });
+            
+            resultsContainer.classList.add('show');
+        }
+
+        // Sélectionner une adresse
+        function selectAddress(result) {
+            const lieuInput = document.getElementById('lieu');
+            const sanitizedAddress = sanitizeInput(result.display_name);
+            lieuInput.value = sanitizedAddress;
+            
+            const lat = parseFloat(result.lat);
+            const lon = parseFloat(result.lon);
+            
+            // Valider les coordonnées
+            if (!validateCoordinates(lat, lon)) {
+                alert('⚠️ Coordonnées GPS invalides');
+                return;
+            }
+            
+            currentLocationData.latitude = lat;
+            currentLocationData.longitude = lon;
+            currentLocationData.address = sanitizedAddress;
+            
+            document.getElementById('autocompleteResults').classList.remove('show');
+            
+            displayLocationInfo();
+            showMapWithMarker(currentLocationData.latitude, currentLocationData.longitude);
+        }
+
+        // Obtenir la position actuelle
+        function getCurrentLocation() {
+            const btn = document.querySelector('.geolocation-btn');
+            
+            if (!navigator.geolocation) {
+                alert('⚠️ La géolocalisation n\'est pas supportée par votre navigateur.\n\nVous pouvez toujours saisir l\'adresse manuellement avec l\'autocomplétion.');
+                return;
+            }
+
+            // Vérifier si on est en contexte non sécurisé
+            if (!window.isSecureContext && window.location.protocol === 'file:') {
+                alert('⚠️ Géolocalisation non disponible en mode local.\n\nPour utiliser la géolocalisation :\n• Hébergez le fichier sur un serveur web (HTTPS)\n• Ou utilisez un serveur local (localhost)\n\nAlternative : Saisissez l\'adresse manuellement.');
+                return;
+            }
+
+            // Vérifier si la permission a été refusée
+            if (permissionsState.geolocation === 'denied') {
+                alert('⚠️ L\'accès à la géolocalisation a été refusé.\n\nPour l\'activer :\n1. Cliquez sur l\'icône 🔒 ou ⓘ dans la barre d\'adresse\n2. Autorisez la géolocalisation\n3. Rechargez la page\n\nAlternative : Utilisez la recherche d\'adresse avec autocomplétion.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '⏳';
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // Valider les coordonnées
+                    if (!validateCoordinates(lat, lon)) {
+                        alert('⚠️ Coordonnées GPS invalides');
+                        btn.disabled = false;
+                        btn.textContent = '📍';
+                        return;
+                    }
+                    
+                    currentLocationData.latitude = lat;
+                    currentLocationData.longitude = lon;
+                    
+                    // Reverse geocoding pour obtenir l'adresse
+                    try {
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
+                            {
+                                headers: {
+                                    'Accept-Language': 'fr',
+                                    'User-Agent': 'ielo-rex-chantiers/1.0'
+                                }
+                            }
+                        );
+                        
+                        if (!response.ok) {
+                            throw new Error('Erreur réseau');
+                        }
+                        
+                        const result = await response.json();
+                        
+                        if (result.display_name) {
+                            currentLocationData.address = sanitizeInput(result.display_name);
+                            document.getElementById('lieu').value = currentLocationData.address;
+                            displayLocationInfo();
+                            showMapWithMarker(lat, lon);
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors du reverse geocoding:', error);
+                        currentLocationData.address = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                        document.getElementById('lieu').value = currentLocationData.address;
+                        displayLocationInfo();
+                        showMapWithMarker(lat, lon);
+                    }
+                    
+                    btn.disabled = false;
+                    btn.textContent = '📍';
+                    permissionsState.geolocation = 'granted';
+                },
+                (error) => {
+                    console.error('Erreur de géolocalisation:', error);
+                    let message = '';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            message = '⚠️ Permission refusée\n\nPour activer la géolocalisation :\n1. Cliquez sur l\'icône 🔒 dans la barre d\'adresse\n2. Autorisez la géolocalisation\n3. Rechargez la page\n\nAlternative : Recherchez l\'adresse manuellement.';
+                            permissionsState.geolocation = 'denied';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            message = '⚠️ Position non disponible\n\nVérifiez que :\n• Les services de localisation sont activés\n• Vous êtes connecté à Internet\n• Vous avez une bonne réception GPS\n\nAlternative : Recherchez l\'adresse manuellement.';
+                            break;
+                        case error.TIMEOUT:
+                            message = '⚠️ Délai d\'attente dépassé\n\nLa localisation prend trop de temps.\nVeuillez réessayer ou saisir l\'adresse manuellement.';
+                            break;
+                        default:
+                            message = '⚠️ Erreur de géolocalisation\n\nVeuillez réessayer ou saisir l\'adresse manuellement.';
+                    }
+                    
+                    alert(message);
+                    btn.disabled = false;
+                    btn.textContent = '📍';
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        // Afficher les informations de localisation
+        function displayLocationInfo() {
+            const locationInfo = document.getElementById('locationInfo');
+            
+            if (currentLocationData.latitude && currentLocationData.longitude) {
+                locationInfo.innerHTML = `
+                    <strong>📍 Coordonnées GPS :</strong> 
+                    ${currentLocationData.latitude.toFixed(6)}, ${currentLocationData.longitude.toFixed(6)}
+                `;
+                locationInfo.classList.add('show');
+            }
+        }
+
+        // Afficher la carte avec un marqueur
+        function showMapWithMarker(lat, lon) {
+            const mapContainer = document.getElementById('mapContainer');
+            mapContainer.classList.add('show');
+            
+            // Initialiser la carte si elle n'existe pas
+            if (!map) {
+                map = L.map('mapContainer').setView([lat, lon], 15);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(map);
+                
+                marker = L.marker([lat, lon]).addTo(map);
+            } else {
+                // Mettre à jour la position de la carte et du marqueur
+                map.setView([lat, lon], 15);
+                marker.setLatLng([lat, lon]);
+            }
+            
+            // Forcer le redimensionnement de la carte
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+        }
+
+        // Fermer l'autocomplétion en cliquant ailleurs
+        document.addEventListener('click', function(event) {
+            const resultsContainer = document.getElementById('autocompleteResults');
+            const lieuInput = document.getElementById('lieu');
+            
+            if (!lieuInput.contains(event.target) && !resultsContainer.contains(event.target)) {
+                resultsContainer.classList.remove('show');
+            }
+        });
+
+        // ============================================
+        // FONCTIONS EXISTANTES (calculs, photos, etc.)
+        // ============================================
+
+        // Calcul automatique du volume
+        function calculateVolume() {
+            const l = parseFloat(document.getElementById('dim_l').value) || 0;
+            const w = parseFloat(document.getElementById('dim_w').value) || 0;
+            const h = parseFloat(document.getElementById('dim_h').value) || 0;
+            const volume = l * w * h;
+            document.getElementById('volume_caisson').value = volume.toFixed(3);
+            
+            // Calcul du poids de paille nécessaire
+            const poidsNecessaire = volume * 115;
+            document.getElementById('poids_paille_necessaire').value = poidsNecessaire.toFixed(2);
+            
+            // Recalculer la masse volumique si la masse est déjà renseignée
+            calculateDensity();
+        }
+
+        // Calcul automatique de la masse volumique
+        function calculateDensity() {
+            const masse = parseFloat(document.getElementById('masse_paille_insufflee').value) || 0;
+            const volume = parseFloat(document.getElementById('volume_caisson').value) || 0;
+            if (volume > 0) {
+                const density = masse / volume;
+                document.getElementById('masse_volumique_calculee').value = density.toFixed(2);
+            }
+        }
+
+        // Ouvrir la sélection de fichier
+        function uploadPhoto(sectionId) {
+            const inputId = sectionId.replace('photoSection', 'fileInput');
+            document.getElementById(inputId).click();
+        }
+
+        // Gérer les fichiers sélectionnés
+        function handleFiles(input, sectionId) {
+            const files = Array.from(input.files);
+            
+            files.forEach(file => {
+                // Valider le fichier
+                if (!validateImageFile(file)) {
+                    return;
+                }
+                
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        addPhotoToGrid(e.target.result, sectionId);
+                    };
+                    reader.onerror = function() {
+                        alert('⚠️ Erreur lors de la lecture du fichier');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            input.value = ''; // Reset input
+        }
+
+        // Ouvrir la caméra
+        async function openCamera(sectionId) {
+            currentSectionForCamera = sectionId;
+            
+            // Vérifier si l'API est disponible
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('⚠️ L\'accès à la caméra n\'est pas supporté.\n\nUtilisez le bouton "Importer une photo" pour :\n• Prendre une photo avec votre appareil\n• Sélectionner une photo existante');
+                return;
+            }
+
+            // Vérifier si on est en contexte non sécurisé
+            if (!window.isSecureContext && window.location.protocol === 'file:') {
+                alert('⚠️ Caméra non disponible en mode local.\n\nPour utiliser la caméra web :\n• Hébergez le fichier sur un serveur HTTPS\n• Ou utilisez localhost\n\nSUR MOBILE :\nCliquez sur "Importer une photo" pour prendre une photo directement !');
+                return;
+            }
+
+            // Vérifier si la permission a été refusée
+            if (permissionsState.camera === 'denied') {
+                alert('⚠️ L\'accès à la caméra a été refusé.\n\nPour l\'activer :\n1. Cliquez sur l\'icône 🔒 dans la barre d\'adresse\n2. Autorisez la caméra\n3. Rechargez la page\n\nSUR MOBILE :\nUtilisez "Importer une photo" pour prendre une photo directement !');
+                return;
+            }
+            
+            try {
+                // Arrêter tout stream existant
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+
+                const section = document.getElementById(sectionId);
+                
+                // Créer les éléments pour la caméra
+                const cameraContainer = document.createElement('div');
+                cameraContainer.id = 'cameraContainer';
+                cameraContainer.style.marginTop = '20px';
+                
+                const video = document.createElement('video');
+                video.id = 'cameraVideo';
+                video.autoplay = true;
+                video.playsinline = true;
+                video.style.maxWidth = '100%';
+                video.style.borderRadius = '8px';
+                
+                const canvas = document.createElement('canvas');
+                canvas.id = 'cameraCanvas';
+                canvas.style.display = 'none';
+                
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.marginTop = '15px';
+                buttonContainer.style.display = 'flex';
+                buttonContainer.style.gap = '10px';
+                buttonContainer.style.justifyContent = 'center';
+                
+                const captureBtn = document.createElement('button');
+                captureBtn.type = 'button';
+                captureBtn.className = 'btn btn-primary';
+                captureBtn.innerHTML = '<span>📸</span> Capturer';
+                captureBtn.onclick = capturePhoto;
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.type = 'button';
+                closeBtn.className = 'btn btn-danger';
+                closeBtn.innerHTML = '<span>❌</span> Fermer';
+                closeBtn.onclick = closeCamera;
+                
+                buttonContainer.appendChild(captureBtn);
+                buttonContainer.appendChild(closeBtn);
+                
+                cameraContainer.appendChild(video);
+                cameraContainer.appendChild(canvas);
+                cameraContainer.appendChild(buttonContainer);
+                
+                // Supprimer l'ancien container de caméra s'il existe
+                const existingCamera = section.querySelector('#cameraContainer');
+                if (existingCamera) {
+                    existingCamera.remove();
+                }
+                
+                section.appendChild(cameraContainer);
+                
+                // Demander l'accès à la caméra
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment', // Préférer la caméra arrière sur mobile
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    } 
+                });
+                
+                currentStream = stream;
+                video.srcObject = stream;
+                permissionsState.camera = 'granted';
+                
+            } catch (error) {
+                console.error('Erreur caméra:', error);
+                
+                let errorMessage = '⚠️ Impossible d\'accéder à la caméra\n\n';
+                
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    errorMessage += 'Permission refusée.\n\n' +
+                                  'Pour activer :\n' +
+                                  '1. Cliquez sur 🔒 dans la barre d\'adresse\n' +
+                                  '2. Autorisez la caméra\n' +
+                                  '3. Rechargez la page\n\n' +
+                                  'ALTERNATIVE :\n' +
+                                  'Utilisez "Importer une photo" (sur mobile, cela ouvre l\'appareil photo directement)';
+                    permissionsState.camera = 'denied';
+                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                    errorMessage += 'Aucune caméra détectée.\n\n' +
+                                  'Utilisez "Importer une photo"';
+                } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                    errorMessage += 'Caméra utilisée par une autre application.\n\n' +
+                                  'Fermez les autres apps utilisant la caméra\n' +
+                                  'ou utilisez "Importer une photo"';
+                } else if (error.name === 'OverconstrainedError') {
+                    errorMessage += 'Paramètres caméra non supportés.\n\n' +
+                                  'Utilisez "Importer une photo"';
+                } else if (error.name === 'SecurityError') {
+                    errorMessage += 'Erreur de sécurité.\n\n' +
+                                  'La caméra nécessite HTTPS ou localhost.\n' +
+                                  'Utilisez "Importer une photo"';
+                } else {
+                    errorMessage += `${error.message}\n\n` +
+                                  'Utilisez "Importer une photo"';
+                }
+                
+                alert(errorMessage);
+                closeCamera();
+            }
+        }
+
+        // Capturer une photo
+        function capturePhoto() {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.getElementById('cameraCanvas');
+            
+            if (video && canvas) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                const context = canvas.getContext('2d');
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                addPhotoToGrid(imageDataUrl, currentSectionForCamera);
+                
+                // Fermer la caméra après la capture
+                closeCamera();
+            }
+        }
+
+        // Fermer la caméra
+        function closeCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            
+            const cameraContainer = document.getElementById('cameraContainer');
+            if (cameraContainer) {
+                cameraContainer.remove();
+            }
+        }
+
+        // Ajouter une photo à la grille
+        function addPhotoToGrid(imageDataUrl, sectionId) {
+            photoStorage[sectionId].push(imageDataUrl);
+            
+            const gridId = sectionId.replace('photoSection', 'photoGrid');
+            const grid = document.getElementById(gridId);
+            
+            const photoItem = document.createElement('div');
+            photoItem.className = 'photo-item';
+            
+            const img = document.createElement('img');
+            img.src = imageDataUrl;
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.innerHTML = '×';
+            removeBtn.onclick = function() {
+                const index = photoStorage[sectionId].indexOf(imageDataUrl);
+                if (index > -1) {
+                    photoStorage[sectionId].splice(index, 1);
+                }
+                photoItem.remove();
+            };
+            
+            photoItem.appendChild(img);
+            photoItem.appendChild(removeBtn);
+            grid.appendChild(photoItem);
+        }
+
+        // Exporter en PDF (simplifié - nécessiterait une bibliothèque comme jsPDF pour une vraie implémentation)
+        function exportToPDF() {
+            alert('Fonction d\'export PDF : Pour une implémentation complète, utilisez la fonction d\'impression du navigateur (Ctrl+P) ou intégrez une bibliothèque comme jsPDF.');
+            window.print();
+        }
+
+        // Exporter les données en JSON
+        function exportToJSON() {
+            const formData = new FormData(document.getElementById('rexForm'));
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                // Sanitiser toutes les entrées
+                data[key] = sanitizeInput(value);
+            }
+            
+            // Ajouter les photos
+            data.photos = photoStorage;
+            
+            // Ajouter les données de localisation avec validation
+            if (currentLocationData.latitude && currentLocationData.longitude) {
+                if (validateCoordinates(currentLocationData.latitude, currentLocationData.longitude)) {
+                    data.geolocation = {
+                        latitude: currentLocationData.latitude,
+                        longitude: currentLocationData.longitude,
+                        address: sanitizeInput(currentLocationData.address)
+                    };
+                }
+            }
+            
+            // Ajouter des métadonnées
+            data.metadata = {
+                exportDate: new Date().toISOString(),
+                version: '1.0',
+                application: 'ielo-rex-chantiers'
+            };
+            
+            const jsonStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            const filename = `rex_chantier_${data.date || new Date().toISOString().split('T')[0]}.json`;
+            a.download = sanitizeInput(filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('✅ Données sauvegardées avec succès !');
+        }
+
+        // Réinitialiser le formulaire
+        function resetForm() {
+            if (confirm('Êtes-vous sûr de vouloir réinitialiser le formulaire ? Toutes les données seront perdues.')) {
+                document.getElementById('rexForm').reset();
+                
+                // Réinitialiser les photos
+                for (let section in photoStorage) {
+                    photoStorage[section] = [];
+                    const gridId = section.replace('photoSection', 'photoGrid');
+                    document.getElementById(gridId).innerHTML = '';
+                }
+                
+                // Réinitialiser les données de localisation
+                currentLocationData = {
+                    latitude: null,
+                    longitude: null,
+                    address: null
+                };
+                
+                // Cacher la carte et les infos de localisation
+                document.getElementById('mapContainer').classList.remove('show');
+                document.getElementById('locationInfo').classList.remove('show');
+                document.getElementById('autocompleteResults').classList.remove('show');
+                
+                // Réinitialiser la carte
+                if (map) {
+                    map.remove();
+                    map = null;
+                    marker = null;
+                }
+                
+                // Fermer la caméra si ouverte
+                closeCamera();
+            }
+        }
+
+        // Nettoyer lors de la fermeture de la page
+        window.addEventListener('beforeunload', function() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>
